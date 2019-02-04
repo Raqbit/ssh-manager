@@ -7,6 +7,9 @@
 # Contact at parisi.robin@gmail.com
 # Github https://github.com/robinparisi/ssh-manager
 # github.io Page https://robinparisi.github.io/ssh-manager/
+#
+# Modified by Raqbit
+# Github https://github.com/Raqbit/ssh-manager
 
 #================== Globals ==================================================
 
@@ -50,17 +53,22 @@ function test_host() {
 }
 
 function separator() {
-	echo -e "----\t----\t----\t----\t----\t----\t----\t----"
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+}
+
+function print_error() {
+	cecho -red "$1"
 }
 
 function list_commands() {
 	separator
-	echo -e "Availables commands"
+	echo -e "Available commands"
 	separator
-	echo -e "$0 cc\t<alias> [username]\t\tconnect to server"
-	echo -e "$0 add\t<alias>:<user>:<host>:[port]\tadd new server"
-	echo -e "$0 del\t<alias>\t\t\t\tdelete server"
-	echo -e "$0 export\t\t\t\t\texport config"
+	echo -e "<alias> [username]\t\t\tconnect to server"
+	echo -e "connect\t<alias>\t[username]\t\tconnect to server"
+	echo -e "add\t<alias>:<user>:<host>:[port]\tadd new server"
+	echo -e "delete\t<alias>\t\t\t\tdelete server"
+	echo -e "export\t\t\t\t\texport config"
 }
 
 function probe ()
@@ -94,12 +102,14 @@ function get_user ()
 	get_raw "$als" | awk -F "$DATA_DELIM" '{ print $'$DATA_HUSER' }'
 }
 function server_add() {
+	alias=$1
+	echo $alias
 	probe "$alias"
 	if [ $? -eq 0 ]; then
-		as	echo "$0: alias '$alias' is in use"
+		as	print_error "Alias '$alias' is in use"
 	else
 		echo "$alias$DATA_DELIM$user" >> $HOST_FILE
-		echo "new alias '$alias' added"
+		cecho -green "New alias '$alias' added"
 	fi
 }
 
@@ -129,86 +139,104 @@ if [ ! $one_line ]; then
 fi
 }
 
+function connect() {
+	alias=$1
+	user=$2
+	probe "$alias"
+	if [ $? -eq 0 ]; then
+		if [ "$user" == ""  ]; then
+			user=$(get_user "$alias")
+		fi
+		addr=$(get_addr "$alias")
+		port=$(get_port "$alias")
+		# Use default port when parameter is missing
+		if [ "$port" == "" ]; then
+			port=$SSH_DEFAULT_PORT
+		fi
+		echo "Connecting to '$alias' ($addr:$port)..."
+		ssh $user@$addr -p $port
+	else
+		print_error "Unknown alias '$alias'"
+		print_servers
+		exit 1
+	fi
+}
+
+function print_servers() {
+	separator 
+	echo "List of availables servers "
+	separator
+	while IFS=: read label user ip port         
+	do    
+		test_host $ip
+		echo -ne "\t"
+		cecho -n -blue $label
+		echo -ne ' ==> '
+		cecho -n -red $user 
+		cecho -n -yellow "@"
+		cecho -n -white $ip
+		echo -ne ' -> '
+		if [ "$port" == "" ]; then
+			port=$SSH_DEFAULT_PORT
+		fi
+		cecho -yellow $port
+		echo
+	done < $HOST_FILE
+}
+
 #=============================================================================
 
 cmd=$1
-alias=$2
-user=$3
 
 # if config file doesn't exist
 if [ ! -f $HOST_FILE ]; then touch "$HOST_FILE"; fi
 
 # without args
 if [ $# -eq 0 ]; then
-	separator 
-	echo "List of availables servers for user $(whoami) "
-	separator
-	while IFS=: read label user ip port         
-	do    
-	test_host $ip
-	echo -ne "\t"
-	cecho -n -blue $label
-	echo -ne ' ==> '
-	cecho -n -red $user 
-	cecho -n -yellow "@"
-	cecho -n -white $ip
-	echo -ne ' -> '
-	if [ "$port" == "" ]; then
-		port=$SSH_DEFAULT_PORT
-	fi
-	cecho -yellow $port
-	echo
-done < $HOST_FILE
-
-list_commands
-
-exit 0
+	print_servers
+	list_commands
+	exit 0
 fi
 
 case "$cmd" in
 	# Connect to host
-	cc )
-		probe "$alias"
-		if [ $? -eq 0 ]; then
-			if [ "$user" == ""  ]; then
-				user=$(get_user "$alias")
-			fi
-			addr=$(get_addr "$alias")
-			port=$(get_port "$alias")
-			# Use default port when parameter is missing
-			if [ "$port" == "" ]; then
-				port=$SSH_DEFAULT_PORT
-			fi
-			echo "connecting to '$alias' ($addr:$port)"
-			ssh $user@$addr -p $port
-		else
-			echo "$0: unknown alias '$alias'"
+	connect )
+		if [ $# -lt 2 ]; then
+			print_error "Please specify an alias"
 			exit 1
 		fi
+		connect $2 $3
 		;;
 
 	# Add new alias
 	add )
-		server_add
+		if [ $# -ne 2 ]; then
+			print_error "Please specify an alias"
+			exit 1
+		fi
+		server_add $2
 		;;
 	# Export config
 	export )
 		echo
 		cat $HOST_FILE
 		;;
-	# Delete ali
-	del )
-		probe "$alias"
+	# Delete alias
+	delete )
+		if [ $# -ne 2 ]; then
+			print_error "Please specify an alias"
+			exit 1
+		fi
+		probe $2
 		if [ $? -eq 0 ]; then
-			cat $HOST_FILE | sed '/^'$alias$DATA_DELIM'/d' > /tmp/.tmp.$$
+			cat $HOST_FILE | sed '/^'$2$DATA_DELIM'/d' > /tmp/.tmp.$$
 			mv /tmp/.tmp.$$ $HOST_FILE
-			echo "alias '$alias' removed"
+			echo "Alias '$2' removed"
 		else
-			echo "$0: unknown alias '$alias'"
+			print_error "Unknown alias '$2'"
 		fi
 		;;
 	* )
-		echo "$0: unrecognised command '$cmd'"
-		exit 1
+		connect $1 $2
 		;;
 esac
