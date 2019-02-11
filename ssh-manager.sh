@@ -166,6 +166,7 @@ function print_servers() {
 	separator 
 	echo "List of availables servers "
 	separator
+	sed -e '/^$/d' $HOST_FILE |
 	while IFS=: read label user ip port         
 	do    
 		test_host $ip
@@ -181,7 +182,7 @@ function print_servers() {
 		fi
 		cecho -yellow $port
 		echo
-	done < $HOST_FILE
+	done
 }
 
 #=============================================================================
