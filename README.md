@@ -3,17 +3,13 @@
 
 A simple script to manage ssh connections on *inx ( Such as UNIX, Linux, Mac OS, etc)
 
-![screenshot](https://github.com/robinparisi/ssh-manager/raw/master/screenshot.png)
+![screenshot](https://github.com/Raqbit/ssh-manager/raw/master/screenshot.png)
 
 ## Basic introduction
 
-    This shell script maintains a file database named ".ssh_servers " which located in "$HOME/.ssh_servers".
-    With this sh, you can use its list to help you remember which hosts you can connect to and what username 
-    and ip and port are them.
-
-    You can customize it with more powerfull functions to easy and widly use.
-
-    Thanks!
+This shell script maintains a file database named ".ssh_servers " which located in "$HOME/.ssh_servers".
+With this tool you can easily manage your ssh servers. 
+Add new servers, get an overview of online & offline servers and connect to them.
 
     # ./ssh-manager.sh add local:root:localhost:22
 	new alias 'local:root:localhost:22' added
@@ -23,18 +19,19 @@ A simple script to manage ssh connections on *inx ( Such as UNIX, Linux, Mac OS,
 	new alias 'local:root:10.20.0.7:22' added
     # ./ssh-manager.sh
 	--------------------------------------------------------------------------------
-	List of availables servers for user root 
+	List of available servers 
 	--------------------------------------------------------------------------------
 	[UP]   local ==> root@localhost -> 22
 	[UP]   local ==> root@127.0.0.1 -> 22
 	[UP]   local ==> root@10.20.0.7 -> 22
 	--------------------------------------------------------------------------------
-	Availables commands
+	Available commands
 	--------------------------------------------------------------------------------
-	cc  <alias> [username]                           connect to server
-	add <alias>:<user>:<host>:[port]                 add new server
-	del <alias>                                      delete server
-	export                                           export config
+	<alias> [username]			connect to server
+	connect	<alias>	[username]		connect to server
+	add	<alias>:<user>:<host>:[port]	add new server
+	delete	<alias>				delete server
+	export					export config
     # cat .ssh_servers 
 	local:root:localhost:22:
 	local:root:127.0.0.1:22:
@@ -44,11 +41,11 @@ A simple script to manage ssh connections on *inx ( Such as UNIX, Linux, Mac OS,
 ## Installation
 
     $ cd ~
-    $ wget --no-check-certificate https://raw.github.com/robinparisi/ssh-manager/master/ssh-manager.sh
+    $ wget https://raw.github.com/Raqbit/ssh-manager/master/ssh-manager.sh
     $ chmod +x ssh-manager.sh
     $ ./ssh-manager.sh
     
-For more convenience, you can create an alias into your .bashrc, .zshrc, etc...
+For more convenience, you can create an alias in your `.bashrc` or `.zshrc`.
 
 For example :
 
@@ -56,10 +53,11 @@ For example :
 
 ## Use
 
-    cc  <alias> [username]                          
-    add <alias>:<user>:<host>:[port]                 
-    del <alias>                                      
-    export                                           
+	<alias> [username]			connect to server
+	connect	<alias>	[username]		connect to server
+	add	<alias>:<user>:<host>:[port]	add new server
+	delete	<alias>				delete server
+	export					export config                                     
 
 ### Authors and Contributors
 
@@ -67,3 +65,5 @@ Original script by Errol Byrd
 Copyright (c) 2010, Errol Byrd 
 
 Modified by Robin Parisi (@robinparisi)
+
+Modified by Raqbit (@Raqbit)
